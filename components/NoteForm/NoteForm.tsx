@@ -1,4 +1,4 @@
-"use client"
+"use client";
 import css from "./NoteForm.module.css";
 import { useId } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -8,28 +8,28 @@ import { toast } from "react-hot-toast";
 import { useNoteDraftStore } from "@/lib/store/noteStore";
 import { useRouter } from "next/navigation";
 
-
 export function NoteForm() {
-   const fieldId = useId();
+  const fieldId = useId();
   const queryClient = useQueryClient();
   const router = useRouter();
   const { draft, setDraft, clearDraft } = useNoteDraftStore();
 
-    const handleChange = (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,) => {
-      setDraft({
-        ...draft,
-        [event.target.name]: event.target.value,
-      });
+  const handleChange = (
+    event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    setDraft({
+      ...draft,
+      [event.target.name]: event.target.value,
+    });
   };
-  
+
   const mutation = useMutation({
     mutationFn: (payload: CreateNotePayload) => createNote(payload),
     onSuccess: () => {
-        clearDraft();
-  router.push('/notes/filter/all');
-  toast.success("Note created");
-  queryClient.invalidateQueries({ queryKey: ["notes"] });
+      clearDraft();
+      router.push("/notes/filter/all");
+      toast.success("Note created");
+      queryClient.invalidateQueries({ queryKey: ["notes"] });
     },
     onError: () => {
       toast.error("Error creating note");
@@ -38,9 +38,6 @@ export function NoteForm() {
 
   async function handleSubmit(formData: FormData) {
     const allowedTags = ["Todo", "Work", "Personal", "Meeting", "Shopping"] as const;
-    
-    
-
     const rawTag = formData.get("tag");
     const tag = allowedTags.includes(rawTag as NoteTag)
       ? (rawTag as NoteTag)
@@ -51,8 +48,16 @@ export function NoteForm() {
       content: (formData.get("content") as string) || "",
       tag,
     };
-      await mutation.mutateAsync(note);
+
+    await mutation.mutateAsync(note);
   }
+
+  // ✅ Додано функцію для кнопки Cancel
+  const handleCancel = () => {
+    clearDraft();
+    router.back();
+    toast("Changes discarded");
+  };
 
   return (
     <form className={css.form} action={handleSubmit}>
@@ -85,7 +90,7 @@ export function NoteForm() {
         <label htmlFor={`${fieldId}-tag`}>Tag</label>
         <select
           id={`${fieldId}-tag`}
-          onChange={handleChange} 
+          onChange={handleChange}
           name="tag"
           className={css.select}
           value={draft.tag}
@@ -99,7 +104,11 @@ export function NoteForm() {
       </div>
 
       <div className={css.actions}>
-        <button  type="button" className={css.cancelButton}>
+        <button
+          onClick={handleCancel}
+          type="button"
+          className={css.cancelButton}
+        >
           Cancel
         </button>
 
@@ -107,7 +116,6 @@ export function NoteForm() {
           type="submit"
           className={css.submitButton}
           disabled={mutation.isPending}
-          formAction={handleSubmit}
         >
           {mutation.isPending ? "Creating..." : "Create note"}
         </button>
